@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 
+import jcmdarg.util.AbstractOptionDescriptor;
+import jcmdarg.util.OptionValue;
+
 /**
  * A command which can be executed (e.g. from the command-line)
  *
@@ -113,73 +116,6 @@ public interface Command {
 		public <T> T get(String name, Class<T> kind);
 	}
 
-	/**
-	 * Describes a configurable option for a given command.
-	 *
-	 * @author David J. Pearce
-	 *
-	 */
-	public interface Option {
-
-		/**
-		 * Get the descriptor from which this instance was created.
-		 *
-		 * @return
-		 */
-		public Option.Descriptor getDescriptor();
-
-		/**
-		 * Get the value associate with this option.
-		 *
-		 * @param kind
-		 * @return
-		 */
-		public <T> T get(Class<T> kind);
-
-		/**
-		 * Provides a descriptor for the option.
-		 *
-		 * @author David J. Pearce
-		 *
-		 */
-		public interface Descriptor {
-			/**
-			 * Get the option name.
-			 *
-			 * @return
-			 */
-			public String getName();
-
-			/**
-			 * Get the description for the argument
-			 * @return
-			 */
-			public String getArgumentDescription();
-
-			/**
-			 * Get a suitable description for the option.
-			 *
-			 * @return
-			 */
-			public String getDescription();
-
-			/**
-			 * Get the default value for this option (or null if no suitable default).
-			 *
-			 * @return
-			 */
-			public Object getDefaultValue();
-
-			/**
-			 * Construct a given option from a given argument string.
-			 *
-			 * @param arg
-			 * @return
-			 */
-			public Option Initialise(String arg);
-		}
-	}
-
 	public interface Template {
 		/**
 		 * Get the command being described by this template.
@@ -211,76 +147,6 @@ public interface Command {
 		 * @return
 		 */
 		public Template getChild();
-	}
-
-	/**
-	 * A generic class for handling option descriptors.
-	 *
-	 * @author David J. Pearce
-	 *
-	 */
-	public static abstract class AbstractOptionDescriptor implements Option.Descriptor {
-		private final String name;
-		private final String argDescription;
-		private final String description;
-		private final Object defaultValue;
-
-		AbstractOptionDescriptor(String name, String argDescription, String description, Object defaultValue) {
-			this.name = name;
-			this.argDescription = argDescription;
-			this.description = description;
-			this.defaultValue = defaultValue;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public String getArgumentDescription() {
-			return argDescription;
-		}
-
-		@Override
-		public String getDescription() {
-			return description;
-		}
-
-		@Override
-		public Object getDefaultValue() {
-			return defaultValue;
-		}
-	}
-
-	public static class OptionValue implements Option {
-		private final Option.Descriptor descriptor;
-		private final Object contents;
-
-		public OptionValue(Option.Descriptor descriptor, Object contents) {
-			this.descriptor = descriptor;
-			this.contents = contents;
-		}
-
-		@Override
-		public Descriptor getDescriptor() {
-			return descriptor;
-		}
-
-		@Override
-		public <T> T get(Class<T> kind) {
-			if(kind.isInstance(contents)) {
-				return (T) contents;
-			} else {
-				throw new IllegalArgumentException(
-						"expected option value " + kind.getSimpleName() + ", got " + contents);
-			}
-		}
-
-		@Override
-		public String toString() {
-			return descriptor.getName() + "=" + contents;
-		}
 	}
 
 	/**

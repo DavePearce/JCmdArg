@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jcmdarg.lang.Command;
-import jcmdarg.lang.Command.Option;
 import jcmdarg.lang.Command.Template;
+import jcmdarg.lang.Option;
 
 /**
  * <p>
@@ -67,7 +67,7 @@ public class CommandParser {
 	 * @param index
 	 */
 	protected Command.Template parse(Command.Descriptor root, String[] args, int index) {
-		ArrayList<Command.Option> options = new ArrayList<>();
+		ArrayList<Option> options = new ArrayList<>();
 		ArrayList<String> arguments = new ArrayList<>();
 		//
 		Command.Template sub = null;
