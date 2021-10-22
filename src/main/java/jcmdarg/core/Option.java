@@ -1,7 +1,9 @@
-package jcmdarg.lang;
+package jcmdarg.core;
 
 /**
- * Describes a configurable option for a given command.
+ * Describes a configurable option for a command. Every option has a
+ * <i>descriptor</i> which provides information about the option, as well as the
+ * ability to construct an option from a <code>String</code>.
  *
  * @author David J. Pearce
  *
@@ -64,5 +66,28 @@ public interface Option {
 		 * @return
 		 */
 		public Option Initialise(String arg);
+	}
+
+	/**
+	 * A generic interface for accessing command options.
+	 *
+	 * @author David J. Pearce
+	 *
+	 */
+	public interface Map {
+		/**
+		 * Check whether a given option is given.
+		 *
+		 * @param name
+		 * @return
+		 */
+		public boolean has(String name);
+		/**
+		 * Get the value associate with a given named option.
+		 *
+		 * @param kind
+		 * @return
+		 */
+		public <T> T get(String name, Class<T> kind);
 	}
 }

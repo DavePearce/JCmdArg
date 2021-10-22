@@ -16,9 +16,9 @@ package jcmdarg.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import jcmdarg.lang.Command;
-import jcmdarg.lang.Command.Template;
-import jcmdarg.lang.Option;
+import jcmdarg.core.Command;
+import jcmdarg.core.Option;
+import jcmdarg.core.Command.Instance;
 
 /**
  * <p>
@@ -55,7 +55,7 @@ public class CommandParser {
 	 *
 	 * @param args
 	 */
-	public Command.Template parse(String[] args) {
+	public Command.Instance parse(String[] args) {
 		return parse(root,args,0);
 	}
 
@@ -66,11 +66,11 @@ public class CommandParser {
 	 * @param args
 	 * @param index
 	 */
-	protected Command.Template parse(Command.Descriptor root, String[] args, int index) {
+	protected Command.Instance parse(Command.Descriptor root, String[] args, int index) {
 		ArrayList<Option> options = new ArrayList<>();
 		ArrayList<String> arguments = new ArrayList<>();
 		//
-		Command.Template sub = null;
+		Command.Instance sub = null;
 		while (index < args.length) {
 			String arg = args[index];
 			if (isLongOption(arg)) {
@@ -86,7 +86,7 @@ public class CommandParser {
 		}
 		//
 
-		Command.Options optionMap = new OptionsMap(options, root.getOptionDescriptors());
+		Option.Map optionMap = new Options.Map(options, root.getOptionDescriptors());
 		//
 		return new ConcreteTemplate(root, optionMap, arguments, sub);
 	}
@@ -136,14 +136,14 @@ public class CommandParser {
 		throw new IllegalArgumentException("invalid command: " + arg);
 	}
 
-	protected static class ConcreteTemplate implements Command.Template {
+	protected static class ConcreteTemplate implements Command.Instance {
 		private final Command.Descriptor descriptor;
-		private final Command.Options options;
+		private final Option.Map options;
 		private final List<String> arguments;
-		private final Command.Template sub;
+		private final Command.Instance sub;
 
-		public ConcreteTemplate(Command.Descriptor descriptor,  Command.Options options, List<String> arguments,
-				Command.Template sub) {
+		public ConcreteTemplate(Command.Descriptor descriptor,  Option.Map options, List<String> arguments,
+				Command.Instance sub) {
 			this.descriptor = descriptor;
 			this.options = options;
 			this.arguments = arguments;
@@ -161,68 +161,13 @@ public class CommandParser {
 		}
 
 		@Override
-		public Template getChild() {
+		public Instance getChild() {
 			return sub;
 		}
 
 		@Override
-		public Command.Options getOptions() {
+		public Option.Map getOptions() {
 			return options;
-		}
-	}
-
-	public static class OptionsMap implements Command.Options {
-		private Option.Descriptor[] descriptors;
-		private Option[] options;
-
-		public OptionsMap(List<Option> options, List<Option.Descriptor> descriptors) {
-			this.options = options.toArray(new Option[options.size()]);
-			this.descriptors = descriptors.toArray(new Option.Descriptor[descriptors.size()]);
-		}
-
-		@Override
-		public boolean has(String name) {
-			for (int i = 0; i != options.length; ++i) {
-				Option option = options[i];
-				if (option.getDescriptor().getName().equals(name)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		@Override
-		public <T> T get(String name, Class<T> kind) {
-			// Check for given values
-			for (int i = 0; i != options.length; ++i) {
-				Option option = options[i];
-				if (option.getDescriptor().getName().equals(name)) {
-					return option.get(kind);
-				}
-			}
-			// Check for default values
-			for (int i = 0; i != descriptors.length; ++i) {
-				Option.Descriptor d = descriptors[i];
-				Object val = d.getDefaultValue();
-				if (kind.isInstance(val)) {
-					return (T) val;
-				}
-			}
-			throw new IllegalArgumentException("invalid option " + name);
-		}
-
-		@Override
-		public String toString() {
-			String r = "{";
-			for (int i = 0; i != options.length; ++i) {
-				if(i!=0) {
-					r = r + ",";
-				}
-				Option option = options[i];
-				r = r + option.getDescriptor().getName();
-				r = r + "=" + option.get(Object.class);
-			}
-			return r + "}";
 		}
 	}
 }
