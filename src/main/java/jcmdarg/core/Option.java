@@ -88,6 +88,6 @@ public interface Option {
 		 * @param kind
 		 * @return
 		 */
-		public <T> T get(String name, Class<T> kind);
+		public <T> T get(Class<T> kind, String name);
 	}
 }

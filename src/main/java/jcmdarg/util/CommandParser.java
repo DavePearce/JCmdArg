@@ -18,7 +18,6 @@ import java.util.List;
 
 import jcmdarg.core.Command;
 import jcmdarg.core.Option;
-import jcmdarg.core.Command.Instance;
 
 /**
  * <p>
@@ -39,13 +38,13 @@ import jcmdarg.core.Command.Instance;
  * @author David J. Pearce
  *
  */
-public class CommandParser {
+public class CommandParser<S,T> {
 	/**
 	 * The list of command roots.
 	 */
-	private final Command.Descriptor root;
+	private final Command.Descriptor<S,T> root;
 
-	public CommandParser(Command.Descriptor root) {
+	public CommandParser(Command.Descriptor<S,T> root) {
 		this.root = root;
 	}
 
@@ -55,7 +54,7 @@ public class CommandParser {
 	 *
 	 * @param args
 	 */
-	public Command.Instance parse(String[] args) {
+	public Command.Arguments<S,T> parse(String[] args) {
 		return parse(root,args,0);
 	}
 
@@ -66,18 +65,25 @@ public class CommandParser {
 	 * @param args
 	 * @param index
 	 */
-	protected Command.Instance parse(Command.Descriptor root, String[] args, int index) {
+	protected ConcreteInstance<S,T> parse(Command.Descriptor<S,T> root, String[] args, int index) {
 		ArrayList<Option> options = new ArrayList<>();
 		ArrayList<String> arguments = new ArrayList<>();
-		//
-		Command.Instance sub = null;
+		// Parse command (if non-root)
+		if(root.getName() != null && !root.getName().equals(args[index])) {
+			throw new IllegalArgumentException(
+					"unknown command encountered \"" + args[index] + "\", expecting \"" + root.getName() + "\"");
+		} else if(root.getName() != null) {
+			index = index + 1;
+		}
+		// Parse an options for this command, and any subcommands encountered.
+		ConcreteInstance<S,T> sub = null;
 		while (index < args.length) {
 			String arg = args[index];
 			if (isLongOption(arg)) {
 				options.add(parseLongOption(root, args[index]));
 			} else if (isCommand(arg, root.getCommands())) {
-				Command.Descriptor cmd = getCommandDescriptor(arg, root.getCommands());
-				sub = parse(cmd, args, index + 1);
+				Command.Descriptor<S,T> cmd = getCommandDescriptor(arg, root.getCommands());
+				sub = parse(cmd, args, index);
 				break;
 			} else {
 				arguments.add(arg);
@@ -88,14 +94,14 @@ public class CommandParser {
 
 		Option.Map optionMap = new Options.Map(options, root.getOptionDescriptors());
 		//
-		return new ConcreteTemplate(root, optionMap, arguments, sub);
+		return new ConcreteInstance<S,T>(root, optionMap, arguments, sub);
 	}
 
 	protected boolean isLongOption(String arg) {
 		return arg.startsWith("--");
 	}
 
-	public Option parseLongOption(Command.Descriptor cmd, String arg) {
+	public Option parseLongOption(Command.Descriptor<S,T> cmd, String arg) {
 		List<Option.Descriptor> descriptors = cmd.getOptionDescriptors();
 		arg = arg.replace("--", "");
 		String[] splits = arg.split("=");
@@ -116,9 +122,9 @@ public class CommandParser {
 		throw new IllegalArgumentException("invalid option: " + arg);
 	}
 
-	protected boolean isCommand(String arg, List<Command.Descriptor> descriptors) {
+	protected boolean isCommand(String arg, List<Command.Descriptor<S,T>> descriptors) {
 		for (int i = 0; i != descriptors.size(); ++i) {
-			Command.Descriptor descriptor = descriptors.get(i);
+			Command.Descriptor<S,T> descriptor = descriptors.get(i);
 			if (arg.equals(descriptor.getName())) {
 				return true;
 			}
@@ -126,9 +132,9 @@ public class CommandParser {
 		return false;
 	}
 
-	protected Command.Descriptor getCommandDescriptor(String arg, List<Command.Descriptor> descriptors) {
+	protected Command.Descriptor<S,T> getCommandDescriptor(String arg, List<Command.Descriptor<S,T>> descriptors) {
 		for (int i = 0; i != descriptors.size(); ++i) {
-			Command.Descriptor descriptor = descriptors.get(i);
+			Command.Descriptor<S,T> descriptor = descriptors.get(i);
 			if (arg.equals(descriptor.getName())) {
 				return descriptor;
 			}
@@ -136,23 +142,18 @@ public class CommandParser {
 		throw new IllegalArgumentException("invalid command: " + arg);
 	}
 
-	protected static class ConcreteTemplate implements Command.Instance {
-		private final Command.Descriptor descriptor;
+	protected static class ConcreteInstance<S,T> implements Command.Arguments<S,T> {
+		private final Command.Descriptor<S,T> descriptor;
 		private final Option.Map options;
 		private final List<String> arguments;
-		private final Command.Instance sub;
+		private final ConcreteInstance<S,T> sub;
 
-		public ConcreteTemplate(Command.Descriptor descriptor,  Option.Map options, List<String> arguments,
-				Command.Instance sub) {
+		public ConcreteInstance(Command.Descriptor<S,T> descriptor, Option.Map options, List<String> arguments,
+				ConcreteInstance<S,T> sub) {
 			this.descriptor = descriptor;
 			this.options = options;
 			this.arguments = arguments;
 			this.sub = sub;
-		}
-
-		@Override
-		public Command.Descriptor getCommandDescriptor() {
-			return descriptor;
 		}
 
 		@Override
@@ -161,13 +162,26 @@ public class CommandParser {
 		}
 
 		@Override
-		public Instance getChild() {
-			return sub;
+		public Option.Map getOptions() {
+			return options;
 		}
 
 		@Override
-		public Option.Map getOptions() {
-			return options;
+		public Command<T> initialise(S state) {
+			// Update state through command
+			state = descriptor.apply(this, state);
+			//
+			if(sub == null) {
+				return descriptor.initialise(state);
+			} else {
+				// Defer to sub-command
+				return sub.initialise(state);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return descriptor.getName() + ":" + options.toString() + ":" + arguments;
 		}
 	}
 }

@@ -282,7 +282,7 @@ public class Options {
 		}
 
 		@Override
-		public <T> T get(String name, Class<T> kind) {
+		public <T> T get(Class<T> kind, String name) {
 			// Check for given values
 			for (int i = 0; i != options.length; ++i) {
 				Option option = options[i];

@@ -13,7 +13,6 @@
 // limitations under the License.
 package jcmdarg.core;
 
-import java.nio.file.Path;
 import java.util.List;
 
 import jcmdarg.util.CommandParser;
@@ -26,33 +25,12 @@ import jcmdarg.util.CommandParser;
  * @author David J. Pearce
  *
  */
-public interface Command {
+public interface Command<T> {
 
 	/**
-	 * Get a descriptor for this command.
-	 *
-	 * @return
+	 * Execute this command returning a given value.
 	 */
-	public Descriptor getDescriptor();
-
-	/**
-	 * Perform any necessary initialisation for this command (e.g. opening
-	 * resources).
-	 */
-	public void initialise();
-
-	/**
-	 * Perform any necessary finalisation for this command (e.g. closing resources).
-	 */
-	public void finalise();
-
-	/**
-	 * Execute this command with the given arguments. Every invocation of this
-	 * function occurs after a single call to <code>initialise()</code> and before
-	 * any calls are made to <code>finalise()</code>. Observe, however, that this
-	 * command may be executed multiple times.
-	 */
-	public boolean execute(Path path, Instance template) throws Exception;
+	public T execute();
 
 	/**
 	 * Provides a descriptive information about this command. This includes
@@ -62,7 +40,7 @@ public interface Command {
 	 * @author David J. Pearce
 	 *
 	 */
-	public interface Descriptor {
+	public interface Descriptor<S,T> {
 		/**
 		 * Get the name of this command. This should uniquely identify the command in
 		 * question.
@@ -86,27 +64,40 @@ public interface Command {
 		public List<Option.Descriptor> getOptionDescriptors();
 
 		/**
+		 * Initialise a command from this descriptor using a given piece of state.
+		 *
+		 * @param state
+		 * @return
+		 */
+		public Command<T> initialise(S state);
+
+		/**
+		 * Apply this descriptor to a given instance and current state. This allows the
+		 * descriptor to update the configuration based on options and arguments passed
+		 * to it. The final state is intented for a sub-command downstream which will
+		 * eventually be the one executed.
+		 *
+		 * @param instance
+		 * @param state
+		 * @return
+		 */
+		public S apply(Arguments<S,T> instance, S state);
+
+		/**
 		 * Get descriptors for any sub-commands of this command.
 		 *
 		 * @return
 		 */
-		public List<Descriptor> getCommands();
+		public List<Descriptor<S,T>> getCommands();
 	}
 
 	/**
-	 * Represents an instantiated command from a given set of command-line
-	 * arguments.
+	 * Represents an instantiated set of arguments for a given command.
 	 *
 	 * @author David J. Pearce
 	 *
 	 */
-	public interface Instance {
-		/**
-		 * Get the command being described by this template.
-		 *
-		 * @return
-		 */
-		public Command.Descriptor getCommandDescriptor();
+	public interface Arguments<S,T> {
 
 		/**
 		 * Get the options described by this template, in the order in which they should
@@ -125,12 +116,13 @@ public interface Command {
 		public List<String> getArguments();
 
 		/**
-		 * Get the child template (if any) given for this template. If no template, then
-		 * this returns <code>null</code>.
+		 * Initialise the actual command to be executed from a given piece of starting
+		 * state.
 		 *
+		 * @param state
 		 * @return
 		 */
-		public Instance getChild();
+		public Command<T> initialise(S state);
 	}
 
 	/**
@@ -140,7 +132,7 @@ public interface Command {
 	 * @param args
 	 * @return
 	 */
-	public static Command.Instance parse(Command.Descriptor root, String... args) {
-		return new CommandParser(root).parse(args);
+	public static <S, T> Command.Arguments<S, T> parse(Command.Descriptor<S, T> root, String... args) {
+		return new CommandParser<>(root).parse(args);
 	}
 }
