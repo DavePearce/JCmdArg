@@ -22,7 +22,7 @@ class Main implements Command<Boolean> {
 ```
 
 This is _instantiated_ with some given state, and can then be
-_executed_ producing a given return value.  A simple descriptor for
+_executed_ producing a given return value.  A simple _descriptor_ for
 this command is the following:
 
 ```Java
