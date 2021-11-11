@@ -36,8 +36,8 @@ public class Options {
 
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_NONNEGATIVE_INTEGER(String name, String description) {
-		return OPTION_INTEGER(name, "<n>", description + " (non-negative)", (n) -> (n >= 0), null);
+	public static Option.Descriptor UNSIGNED_INTEGER(String name, String description) {
+		return INTEGER(name, "<n>", description + " (unsigned)", (n) -> (n >= 0), null);
 	}
 
 	/**
@@ -50,8 +50,8 @@ public class Options {
 	 *            the default value to use
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_NONNEGATIVE_INTEGER(String name, String description, int defaultValue) {
-		return OPTION_INTEGER(name, "<n>", description + " (non-negative, default " + defaultValue + ")",
+	public static Option.Descriptor UNSIGNED_INTEGER(String name, String description, int defaultValue) {
+		return INTEGER(name, "<n>", description + " (non-negative, default " + defaultValue + ")",
 				(n) -> (n >= 0), defaultValue);
 	}
 
@@ -66,8 +66,8 @@ public class Options {
 	 *            the default value to use
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_POSITIVE_INTEGER(String name, String description, int defaultValue) {
-		return OPTION_INTEGER(name, "<n>", description + " (positive, default " + defaultValue + ")", (n) -> (n > 0), defaultValue);
+	public static Option.Descriptor POSITIVE_INTEGER(String name, String description, int defaultValue) {
+		return INTEGER(name, "<n>", description + " (positive, default " + defaultValue + ")", (n) -> (n > 0), defaultValue);
 	}
 
 	/**
@@ -77,7 +77,7 @@ public class Options {
 	 * @param description
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_INTEGER(String name, String argument, String description,
+	public static Option.Descriptor INTEGER(String name, String argument, String description,
 			Predicate<Integer> constraint, Integer defaultValue) {
 		return new AbstractDescriptor(name, argument, description, defaultValue) {
 			@Override
@@ -101,8 +101,8 @@ public class Options {
 
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_BOUNDED_DOUBLE(String name, String description, double low, double high) {
-		return OPTION_DOUBLE(name, "<n>", description + " (between " + low + ".." + high + ")",
+	public static Option.Descriptor BOUNDED_DOUBLE(String name, String description, double low, double high) {
+		return DOUBLE(name, "<n>", description + " (between " + low + ".." + high + ")",
 				(n) -> (n >= low && n <= high), low, high, null);
 	}
 
@@ -113,7 +113,7 @@ public class Options {
 	 * @param description
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_DOUBLE(String name, String argument, String description,
+	public static Option.Descriptor DOUBLE(String name, String argument, String description,
 			Predicate<Double> constraint, double low, double high, Double defaultValue) {
 		return new AbstractDescriptor(name, argument, description, defaultValue) {
 			@Override
@@ -128,7 +128,7 @@ public class Options {
 		};
 	}
 
-	public static Option.Descriptor OPTION_FLAG(String name, String description) {
+	public static Option.Descriptor FLAG(String name, String description) {
 		return new AbstractDescriptor(name, null, description, null) {
 			@Override
 			public Option Initialise(String arg) {
@@ -143,7 +143,7 @@ public class Options {
 	}
 
 
-	public static Option.Descriptor OPTION_FLAG(String name, String description,
+	public static Option.Descriptor FLAG(String name, String description,
 			boolean defaultValue) {
 		return new AbstractDescriptor(name, null, description, defaultValue) {
 			@Override
@@ -168,7 +168,7 @@ public class Options {
 
 	 * @return
 	 */
-	public static Option.Descriptor OPTION_STRING(String name, String description, String defaultValue) {
+	public static Option.Descriptor STRING(String name, String description, String defaultValue) {
 		return new AbstractDescriptor(name, null, description, defaultValue) {
 			@Override
 			public Option Initialise(String arg) {
